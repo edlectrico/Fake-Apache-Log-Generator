@@ -32,12 +32,13 @@ from kafka import KafkaProducer
 from kafka.errors import KafkaError
 
 '''
-To create the 'test' topic in Kafka:
+To create the 'header' and 'ping' topics in Kafka:
 ./<kafka_path>/bin/kafka-server-start.sh config/server.propertieskafka-server-start.sh config/server.properties
-./<kafka_path>/bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic test
+./<kafka_path>/bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic header
+./<kafka_path>/bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic ping
 
 To check that the messages are reaching Kafka:
-./<kafka_path>/bin/kafka-console-consumer --zookeeper localhost:2181 --topic test
+./<kafka_path>/bin/kafka-console-consumer.sh --zookeeper localhost:2181 --topic header
 
 Note: We assume that you've already run the zookeeper server at localhost:2181. By default:
 ./<kafka_path>/bin/zookeeper-server-start.sh config/zookeeper.properties
@@ -60,10 +61,17 @@ class Producer(threading.Thread):
             resources=["/list","/wp-content","/wp-admin","/explore","/search/tag/list","/app/main/posts","/posts/posts/explore","/apps/cart.jsp?appID="]
             ualist=[faker.firefox, faker.chrome, faker.safari, faker.internet_explorer, faker.opera]
 
+            # This field will be used for choosing between topics and, later,
+            # for Spark to use them
+            headers=["HEADER","PING"]
+
             ip = faker.ipv4()
             dt = otime.strftime('%d/%b/%Y:%H:%M:%S')
             tz = datetime.datetime.now(local).strftime('%z')
             vrb = numpy.random.choice(verb,p=[0.6,0.1,0.1,0.2])
+
+            #header_agg = random.choice(headers)
+            header_agg = numpy.random.choice(headers,p=[0.3,0.7])
 
             uri = random.choice(resources)
             if uri.find("apps")>0:
@@ -75,9 +83,12 @@ class Producer(threading.Thread):
             referer = faker.uri()
             useragent = numpy.random.choice(ualist,p=[0.5,0.3,0.1,0.05,0.05] )()
 
-            message = '%s - - [%s %s] "%s %s HTTP/1.0" %s %s "%s" "%s"\n' % (ip,dt,tz,vrb,uri,resp,byt,str(referer),str(useragent))
+            message = '%s - %s - - [%s %s] "%s %s HTTP/1.0" %s %s "%s" "%s"\n' % (header_agg,ip,dt,tz,vrb,uri,resp,byt,str(referer),str(useragent))
 
-            producer.send('test', message)
+            if (header_agg=="HEADER"):
+                producer.send('header', message)
+            else:
+                producer.send('ping', message)
             # time between each send action
             time.sleep(0.5)
 
