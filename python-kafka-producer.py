@@ -31,6 +31,8 @@ import threading, logging, time
 from kafka import KafkaProducer
 from kafka.errors import KafkaError
 
+import json
+
 '''
 To create the 'header' and 'ping' topics in Kafka:
 ./<kafka_path>/bin/kafka-server-start.sh config/server.propertieskafka-server-start.sh config/server.properties
@@ -65,13 +67,13 @@ class Producer(threading.Thread):
             # for Spark to use them
             headers=["HEADER","PING"]
 
-            ip = faker.ipv4()
-            dt = otime.strftime('%d/%b/%Y:%H:%M:%S')
-            tz = datetime.datetime.now(local).strftime('%z')
-            vrb = numpy.random.choice(verb,p=[0.6,0.1,0.1,0.2])
+            ip = str(faker.ipv4())
+            dt = str(otime.strftime('%d/%b/%Y:%H:%M:%S'))
+            tz = str(datetime.datetime.now(local).strftime('%z'))
+            vrb = str(numpy.random.choice(verb,p=[0.6,0.1,0.1,0.2]))
 
             #header_agg = random.choice(headers)
-            header_agg = numpy.random.choice(headers,p=[0.3,0.7])
+            header_agg = str(numpy.random.choice(headers,p=[0.3,0.7]))
 
             uri = random.choice(resources)
             if uri.find("apps")>0:
@@ -79,17 +81,21 @@ class Producer(threading.Thread):
 
         	# resp = numpy.random.choice(response,p=[0.9,0.04,0.02,0.04])
             resp = "200"
-            byt = int(random.gauss(5000,50))
-            referer = faker.uri()
-            useragent = numpy.random.choice(ualist,p=[0.5,0.3,0.1,0.05,0.05] )()
+            byt = str(int(random.gauss(5000,50)))
+            referer = str(faker.uri())
+            useragent = str(numpy.random.choice(ualist,p=[0.5,0.3,0.1,0.05,0.05] )())
 
             message = '%s - %s - - [%s %s] "%s %s HTTP/1.0" %s %s "%s" "%s"\n' % (header_agg,ip,dt,tz,vrb,uri,resp,byt,str(referer),str(useragent))
+
+            message_json = {'header':header_agg, 'ip':ip, 'dt':dt, 'tz':tz, 'vrb':vrb, 'uri':str(uri), 'resp':resp, 'byt':byt, 'referer':referer, 'useragent':useragent}
+            print(json.dumps(message_json))
 
             if (header_agg=="HEADER"):
                 producer.send('header', message)
             else:
                 producer.send('ping', message)
             # time between each send action
+
             time.sleep(0.5)
 
 def main():
@@ -100,7 +106,8 @@ def main():
     for t in tasks:
         t.start()
 
-    time.sleep(10)
+    # how many times
+    time.sleep(100)
 
 if __name__ == "__main__":
     logging.basicConfig(
