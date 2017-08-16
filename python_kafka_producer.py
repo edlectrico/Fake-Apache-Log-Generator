@@ -77,12 +77,9 @@ class Producer(threading.Thread):
 
             message = '%s - - [%s %s] "%s %s HTTP/1.0" %s %s "%s" "%s"\n' % (str(ip),str(dt),str(tz),str(vrb),str(uri),str(resp),str(byt),str(referer),str(useragent))
 
-            #while True:
-                # producer.send(<topic>, <message>)
-                # producer.send('test', message)
-                # time.sleep(1)
             producer.send('test', message)
-            time.sleep(1)
+            # time between each send action
+            time.sleep(0.5)
 
 def main():
     tasks = [
