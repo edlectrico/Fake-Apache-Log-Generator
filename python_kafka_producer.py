@@ -75,7 +75,7 @@ class Producer(threading.Thread):
             referer = faker.uri()
             useragent = numpy.random.choice(ualist,p=[0.5,0.3,0.1,0.05,0.05] )()
 
-            message = '%s - - [%s %s] "%s %s HTTP/1.0" %s %s "%s" "%s"\n' % (str(ip),str(dt),str(tz),str(vrb),str(uri),str(resp),str(byt),str(referer),str(useragent))
+            message = '%s - - [%s %s] "%s %s HTTP/1.0" %s %s "%s" "%s"\n' % (ip,dt,tz,vrb,uri,resp,byt,str(referer),str(useragent))
 
             producer.send('test', message)
             # time between each send action
