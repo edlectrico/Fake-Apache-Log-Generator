@@ -1,4 +1,9 @@
 #!/usr/bin/python
+'''
+This Python module, originally forked from https://github.com/kiritbasu/Fake-Apache-Log-Generator,
+aims to generate massive log events to Kafka. More concretelly, we will be
+writing into two different topics.
+'''
 import time
 import datetime
 import pytz
@@ -8,15 +13,18 @@ import gzip
 import zipfile
 import sys
 import argparse
-from faker import Faker
 from random import randrange
+import os, ssl
+
+# External imports:
+# pip install faker
+# pip install tzlocal
+from faker import Faker
 from tzlocal import get_localzone
 local = get_localzone()
 
-#todo:
-# allow writing different patterns (Common Log, Apache Error log etc)
-# log rotation
-
+# Import the producer Python class
+import python_kafka_producer
 
 class switch(object):
     def __init__(self, value):
