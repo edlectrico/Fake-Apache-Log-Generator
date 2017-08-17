@@ -50,7 +50,8 @@ class Producer(threading.Thread):
     daemon = True
 
     def run(self):
-        producer = KafkaProducer(bootstrap_servers='localhost:9092')
+        producer = KafkaProducer(bootstrap_servers='localhost:9092',
+                value_serializer=lambda v: json.dumps(v).encode('utf-8'))
 
         while True:
             faker = Faker()
@@ -75,9 +76,9 @@ class Producer(threading.Thread):
             #header_agg = random.choice(headers)
             header_agg = str(numpy.random.choice(headers,p=[0.3,0.7]))
 
-            uri = random.choice(resources)
-            if uri.find("apps")>0:
-                uri += `random.randint(1000,10000)`
+            # uri = random.choice(resources)
+            # if uri.find("apps")>0:
+                # uri += `random.randint(1000,10000)`
 
         	# resp = numpy.random.choice(response,p=[0.9,0.04,0.02,0.04])
             resp = "200"
@@ -85,15 +86,20 @@ class Producer(threading.Thread):
             referer = str(faker.uri())
             useragent = str(numpy.random.choice(ualist,p=[0.5,0.3,0.1,0.05,0.05] )())
 
-            message = '%s - %s - - [%s %s] "%s %s HTTP/1.0" %s %s "%s" "%s"\n' % (header_agg,ip,dt,tz,vrb,uri,resp,byt,str(referer),str(useragent))
+            # message = '%s - %s - - [%s %s] "%s %s HTTP/1.0" %s %s "%s" "%s"\n' % (header_agg,ip,dt,tz,vrb,uri,resp,byt,str(referer),str(useragent))
+            message = '%s - %s - - [%s %s] "%s %s HTTP/1.0" %s "%s" "%s"\n' % (header_agg,ip,dt,tz,vrb,resp,byt,str(referer),str(useragent))
 
-            message_json = {'header':header_agg, 'ip':ip, 'dt':dt, 'tz':tz, 'vrb':vrb, 'uri':str(uri), 'resp':resp, 'byt':byt, 'referer':referer, 'useragent':useragent}
+            message_json = {'header':header_agg, 'ip':ip, 'dt':dt, 'tz':tz, 'vrb':vrb, 'resp':resp, 'byt':byt, 'referer':referer, 'useragent':useragent}
             print(json.dumps(message_json))
 
+            # testing generated JSON message (validated in https://jsonformatter.curiousconcept.com/#)
+            # f = open('message_json', 'w')
+            # f.write(json.dumps(message_json))
+
             if (header_agg=="HEADER"):
-                producer.send('header', message)
+                producer.send('header', message_json)
             else:
-                producer.send('ping', message)
+                producer.send('ping', message_json)
             # time between each send action
 
             time.sleep(0.5)
@@ -107,7 +113,7 @@ def main():
         t.start()
 
     # how many times
-    time.sleep(100)
+    time.sleep(10)
 
 if __name__ == "__main__":
     logging.basicConfig(
